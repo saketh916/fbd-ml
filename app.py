@@ -20,6 +20,13 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import traceback
 
+opts.add_argument("--headless=new")
+opts.add_argument("--no-sandbox")
+opts.add_argument("--disable-dev-shm-usage")
+opts.add_argument("--disable-gpu")
+opts.add_argument("--window-size=1920,1080")
+opts.add_argument("--disable-blink-features=AutomationControlled")
+
 # ----------------------------------------------------------------------------- #
 # 🧠  SETUP
 # ----------------------------------------------------------------------------- #
@@ -300,4 +307,5 @@ def scrape():
 
 # ----------------------------------------------------------------------------- #
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7860, debug=True)
+    port = int(os.environ.get("PORT", 7860))
+    app.run(host="0.0.0.0", port=port, debug=False)
