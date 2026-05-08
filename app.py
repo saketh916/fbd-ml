@@ -20,12 +20,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import traceback
 
-opts.add_argument("--headless=new")
-opts.add_argument("--no-sandbox")
-opts.add_argument("--disable-dev-shm-usage")
-opts.add_argument("--disable-gpu")
-opts.add_argument("--window-size=1920,1080")
-opts.add_argument("--disable-blink-features=AutomationControlled")
+
 
 # ----------------------------------------------------------------------------- #
 # 🧠  SETUP
@@ -123,6 +118,7 @@ def setup_browser():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
     options.add_argument("--window-size=1920,1080")
+    options.add_argument("--disable-blink-features=AutomationControlled")
 
     return uc.Chrome(
         options=options,
