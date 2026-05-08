@@ -1,14 +1,14 @@
-# Use a lightweight Python image
 FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install Chrome and necessary dependencies (Debian 12+ compatible)
+# Install Chrome and necessary dependencies (Debian/Ubuntu)
 RUN apt-get update && apt-get install -y \
     chromium \
     chromium-driver \
     wget \
+    ca-certificates \
     fonts-liberation \
     libnss3 \
     libxss1 \
@@ -22,41 +22,33 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
+# Copy requirements and install Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install SpaCy English model
+# Install SpaCy model (will be cached under HF_HOME)
 RUN python -m spacy download en_core_web_sm
 
-# ----------------------------------------------------
-# CRITICAL FIXES FOR PERMISSION ERROR
-# ----------------------------------------------------
+# Create non-root user and HF cache dir (fix permission issues)
+RUN useradd -m -u 1000 user && \
+    mkdir -p /app/.cache/huggingface && \
+    chown -R user:user /app/.cache
 
-# 1. Create non-root user
-RUN useradd -m -u 1000 user
+# Set HF cache path so transformers/tokenizers use writable dir
+ENV HF_HOME=/app/.cache/huggingface
 
-# 2. Set cache environment variable (to the user's home/work directory)
-ENV HF_HOME /app/.cache/huggingface
-
-# 3. Explicitly create the cache directory and set ownership to the new 'user'
-# This step is the final measure to prevent the PermissionError.
-RUN mkdir -p ${HF_HOME} && chown -R user:user ${HF_HOME}
-
-# 4. Switch to the non-root user
-USER user
-# ----------------------------------------------------
-
-# Copy application files, model weights, and scripts
-# Use --chown to ensure the files belong to the non-root 'user'
-COPY --chown=user:user . .
-
-# Expose Hugging Face Space port
-EXPOSE 7860
-
-# Environment variables for Chromium/Chromedriver
+# Ensure chrome/chromedriver env variables are set (paths from apt packages)
 ENV CHROME_PATH=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
-# Run Flask app on Hugging Face’s default port
+# Copy code (make it belong to user)
+COPY --chown=user:user . .
+
+# Switch to non-root
+USER user
+
+# Expose port
+EXPOSE 7860
+
+# Run the Flask app
 CMD ["python", "app.py"]
